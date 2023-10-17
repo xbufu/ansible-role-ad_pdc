@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  role_name: primary_dc
+  role_name: ad_pdc
   author: xbufu
   description: Primary DC role.
   company: Bufu-Security
