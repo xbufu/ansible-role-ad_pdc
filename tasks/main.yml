@@ -1,0 +1,9 @@
+---
+- name: Enable NTP and set time servers
+  ansible.builtin.include_tasks: enable_ntp.yml
+
+- name: Install requirements
+  ansible.builtin.include_tasks: install_requirements.yml
+
+- name: Create a new AD Domain
+  ansible.builtin.include_tasks: create_forest.yml

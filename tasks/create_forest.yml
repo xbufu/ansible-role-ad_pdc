@@ -1,0 +1,80 @@
+---
+- name: Create new Forest
+  ansible.windows.win_domain:
+    dns_domain_name: '{{ domain_name }}'
+    domain_netbios_name: '{{ netbios_name }}'
+    domain_mode: Win2012R2
+    forest_mode: Win2012R2
+    safe_mode_password: '{{ domain_password }}'
+    database_path: C:\Windows\NTDS
+    sysvol_path: C:\Windows\SYSVOL
+    install_dns: true
+  register: domain_install
+
+- name: Reboot
+  ansible.windows.win_reboot:
+  when: domain_install.changed
+
+- name: Update Ansible users to DA
+  ansible.builtin.set_fact:
+    ansible_user: '{{ netbios_name }}\{{ domain_admin_user }}'
+    ansible_become_user: '{{ netbios_name }}\{{ domain_admin_user }}'
+    ansible_password: '{{ domain_admin_password }}'
+
+- name: Wait for Active Directory Services to start
+  ansible.windows.win_service:
+    name: '{{ item }}'
+  register: svc
+  until: svc.state == "running"
+  loop:
+    - NTDS
+    - ADWS
+    - DNS
+
+- name: Waiting to the domain to become available
+  ansible.windows.win_dsc:
+    resource_name: WaitForADDomain
+    DomainName: "{{ domain_name }}"
+
+- name: Add ActiveDirectory PowerShell module
+  community.windows.win_psmodule:
+    name: ActiveDirectory
+    state: present
+
+- name: Create reverse DNS zone
+  ansible.windows.win_shell: "Add-DnsServerPrimaryZone -NetworkID {{ reverse_dns_zone }} -ReplicationScope Forest"
+  register: result
+  failed_when: "('ResourceExists' not in result.stderr) and result.rc != 0"
+  until: "'ResourceExists' in result.stderr or result is succeeded"
+
+- name: Ensure DNS Forwarders are set to desired forwarders
+  ansible.windows.win_shell: |
+    Try {
+      $CurrentForwarders = $([Array]$(Get-DnsServerForwarder).IPAddress.IPAddressToString)
+      $DesiredForwarders = ConvertFrom-JSON '{{ dns_forwarders | to_json }}'
+      if ($CurrentForwarders) {
+        if ($Null -ne $(Compare-Object $CurrentForwarders $DesiredForwarders)) {
+          Set-DNSServerForwarder -IPAddress $DesiredForwarders
+          Exit 1
+        } Else {
+          Exit 0
+        }
+      } Else {
+        Set-DNSServerForwarder -IPAddress $DesiredForwarders
+        Exit 1
+      }
+    }
+    Catch {
+      Exit 2
+    }
+  register: dns_forwarders
+  changed_when: dns_forwarders.rc == 1
+  failed_when: dns_forwarders.rc == 2
+
+- name: Ensure the UserPrincipalName of Domain Administrator is set correctly
+  community.windows.win_domain_user:
+    name: '{{ domain_admin_user }}'
+    upn: '{{ domain_admin_user }}@{{ domain_name }}'
+    domain_username: '{{ netbios_name }}\{{ domain_admin_user }}'
+    domain_password: "{{ domain_admin_password }}"
+    update_password: on_create

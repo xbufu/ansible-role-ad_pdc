@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: primary_dc
+  author: xbufu
+  description: Primary DC role.
+  company: Bufu-Security
+  license: license (BSD, MIT)
+  min_ansible_version: "2.1"
+  platforms:
+    - name: Windows
+      versions:
+        - 'Server 2016'
+        - 'Server 2019'
+        - 'Server 2022'
+
+  galaxy_tags:
+    - windows
+    - ad
+    - dc

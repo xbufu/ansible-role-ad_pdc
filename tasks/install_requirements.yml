@@ -1,0 +1,17 @@
+---
+- name: Ensure the required NuGet package provider version is installed
+  ansible.windows.win_shell: Find-PackageProvider -Name Nuget -ForceBootstrap -IncludeDependencies -Force
+
+- name: Ensure that required DSC resources and Powershell Modules are present
+  community.windows.win_psmodule:
+    name: "{{ item }}"
+    accept_license: true
+    state: present
+  with_items: "{{ required_psmodules }}"
+
+- name: Ensure required Windows Features are installed
+  ansible.windows.win_feature:
+    name: '{{ item }}'
+    include_management_tools: yes
+  with_items: "{{ required_features }}"
+
