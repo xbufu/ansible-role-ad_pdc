@@ -12,6 +12,5 @@
 - name: Ensure required Windows Features are installed
   ansible.windows.win_feature:
     name: '{{ item }}'
-    include_management_tools: yes
+    include_management_tools: true
   with_items: "{{ required_features }}"
-
