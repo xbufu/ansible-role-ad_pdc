@@ -69,10 +69,10 @@ jobs:
           ansible-galaxy role delete --api-key ${{ secrets.GALAXY_API_KEY }}
           $(echo ${{ github.repository }} | cut -d/ -f1) $(echo ${{ github.repository }} | cut -d/ -f2)
 
-      - name: Delete previous role release from old galaxy.
-        run: >-
-          ansible-galaxy role delete -s https://old-galaxy.ansible.com --api-key ${{ secrets.GALAXY_API_KEY }}
-          $(echo ${{ github.repository }} | cut -d/ -f1) $(echo ${{ github.repository }} | cut -d/ -f2)
+      # - name: Delete previous role release from old galaxy.
+      #   run: >-
+      #     ansible-galaxy role delete -s https://old-galaxy.ansible.com --api-key ${{ secrets.GALAXY_API_KEY }}
+      #     $(echo ${{ github.repository }} | cut -d/ -f1) $(echo ${{ github.repository }} | cut -d/ -f2)
 
       - name: Trigger a new import on Galaxy.
         run: >-
