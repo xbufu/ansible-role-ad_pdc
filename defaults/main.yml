@@ -13,6 +13,6 @@ required_psmodules:
   - NetworkingDsc
   - ComputerManagementDsc
   - ActiveDirectoryDsc
-required_features: 
+required_features:
   - AD-domain-services
   - DNS
